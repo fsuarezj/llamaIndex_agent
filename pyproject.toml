@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.10"
 llama-index = "^0.9.43"
 logging = "^0.4.9.6"
+tiktoken = "^0.5.2"
 
 
 [build-system]
