@@ -1,3 +1,4 @@
 llamaindex_agent/data
 llamaindex_agent/data_not_used
 .pyc
+.pytest_cache
