@@ -41,5 +41,5 @@ documents = loader.load_data(file=Path('./data/CVAP_Guidance.pdf'))
 index = VectorStoreIndex.from_documents(documents)
 
 ######### Inference ##########
-ip = InferencePipeline(index)
+ip = InferencePipeline(index, llm)
 ip.run()
