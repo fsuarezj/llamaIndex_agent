@@ -2,6 +2,8 @@
 from llama_index.llms import ChatMessage, MessageRole, OpenAI
 from llama_index.prompts import PromptTemplate, ChatPromptTemplate
 from llama_index.tools import BaseTool, FunctionTool
+from typing import List
+import json
 from global_conf import MODE
 
 class XlsFormsAgent:
@@ -9,23 +11,24 @@ class XlsFormsAgent:
     
     def __init__(
             self,
-            tools: Sequence[BaseTool] = [],
+#            tools: Sequence[BaseTool] = [],
+            llm: OpenAI = None,
             chat_history: List[ChatMessage] = [],
-            llm: OpenAI = None
     ) -> None:
-        self._tools = {tool.metadata.name: tool for tool in tools}
         self._chat_history = chat_history
 
         #Defining tools
         self._llm = llm
-        self._multiply_tool - FunctionTool.from_defaults(fn=self._multiply)
-        self._add_tool - FunctionTool.from_defaults(fn=self._add)
+        self._multiply_tool = FunctionTool.from_defaults(fn=self._multiply)
+        ### CHANGE THIS BY CREATING PROPER TOOLS IN JSON
+        self._add_tool = FunctionTool.from_defaults(fn=self._add)
+        self._tools = {tool.metadata.name: tool for tool in [self._multiply_tool, self._add_tool]}
 
-    def _multiply(a: int, b: int) -> int:
-        """Multiple two integers and returns the result integer"""
+    def _multiply(self, a: int, b: int) -> int:
+        """Multiply two integers and returns the result integer"""
         return a * b
 
-    def _add(a: int, b: int) -> int:
+    def _add(self, a: int, b: int) -> int:
         """Add two integers and returns the result integer"""
         return a + b
 
@@ -39,9 +42,11 @@ class XlsFormsAgent:
 
         ai_message = self._llm.chat(chat_history, tools=tools).message
         additional_kwargs = ai_message.additional_kwargs
+        print(f"Printing additional_kwargs: {additional_kwargs}")
         chat_history.append(ai_message)
 
-        tool_calls = ai_message.additional_kwargs.get("tools_calls", None)
+        tool_calls = ai_message.additional_kwargs.get("tool_calls", None)
+        print(tool_calls)
         if tool_calls is not None:
             for tool_call in tool_calls:
                 function_message = self._call_function(tool_call)
@@ -50,8 +55,22 @@ class XlsFormsAgent:
                 chat_history.append(ai_message)
         
         return ai_message.content
-
-
+    
+    def _call_function(self, tool_call: dict) -> ChatMessage:
+        id_ = tool_call.id
+        function_call = tool_call.function
+        tool = self._tools[function_call.name]
+        output = tool(**json.loads(function_call.arguments))
+        print(f"> Calling tool: {function_call.name}")
+        return ChatMessage(
+            name=function_call.name,
+            content=str(output),
+            role="tool",
+            additional_kwargs={
+                "tool_call_id": id_,
+                "name": function_call.name
+            }
+        )
 
 
 class InferencePipeline():
@@ -88,6 +107,12 @@ class InferencePipeline():
             print(response.get_formatted_sources())
             print("Question:", query)
             print(f"Response was {response}")
+        elif MODE == "agent":
+            agent = XlsFormsAgent(self._llm)
+            print("Hi")
+            print(agent.chat("Hi"))
+            print("Multiply")
+            print(agent.chat("What is 21224 * 123132"))
         elif MODE == "chat":
             #CVAROLE = "You are a Cash and Voucher Assistance expert from the Red Cross Red Crescent Movement. You base your answers only in the context"
             CVAROLE = "You are a Cash and Voucher Assistance that speaks in Shakespeare style and always finish its responses saying 'Goat Bless You'"

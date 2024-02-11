@@ -17,7 +17,7 @@ from inference import InferencePipeline
 from llama_index.llms import OpenAI, ChatMessage, HuggingFaceLLM, MessageRole
 from llama_index.prompts import PromptTemplate, ChatPromptTemplate
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 
 ######### INIT SYSTEM #########
