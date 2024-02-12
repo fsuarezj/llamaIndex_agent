@@ -4,7 +4,7 @@ from pathlib import Path
 import logging
 import sys
 # Common
-from llama_index import ServiceContext, set_global_service_context, set_global_tokenizer
+from llama_index import ServiceContext, set_global_service_context, set_global_tokenizer, set_global_handler
 from global_conf import LLM, GPT_MODEL, HF_MODEL, EMBED_MODEL, MODE
 # Feature Pipeline
 from llama_index import VectorStoreIndex, download_loader
