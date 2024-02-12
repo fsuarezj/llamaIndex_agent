@@ -12,6 +12,8 @@ logging = "^0.4.9.6"
 tiktoken = "^0.5.2"
 transformers = "^4.37.2"
 accelerate = "^0.26.1"
+wikipedia = "^1.4.0"
+pyvis = "^0.3.2"
 
 
 [build-system]
