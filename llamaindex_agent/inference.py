@@ -1,8 +1,9 @@
 # Inference Pipeline
-from llama_index.llms import ChatMessage, MessageRole, OpenAI
-from llama_index.prompts import PromptTemplate, ChatPromptTemplate
-from llama_index.tools import BaseTool, FunctionTool
-from llama_index.query_pipeline import QueryPipeline
+from llama_index.core.llms import ChatMessage, MessageRole
+from llama_index.llms.openai import OpenAI
+from llama_index.core.prompts import PromptTemplate, ChatPromptTemplate
+from llama_index.core.tools import BaseTool, FunctionTool
+from llama_index.core.query_pipeline import QueryPipeline
 from typing import List
 import json
 from global_conf import MODE

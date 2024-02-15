@@ -4,18 +4,20 @@ from pathlib import Path
 import logging
 import sys
 # Common
-from llama_index import ServiceContext, set_global_service_context, set_global_tokenizer, set_global_handler
+from llama_index.core import Settings, set_global_service_context, set_global_tokenizer, set_global_handler
 from global_conf import LLM, GPT_MODEL, HF_MODEL, EMBED_MODEL, MODE
 # Feature Pipeline
-from llama_index import VectorStoreIndex, download_loader
+from llama_index.core import VectorStoreIndex, download_loader
 import tiktoken
 from transformers import AutoTokenizer
 # Training Pipeline
 # Empty
 # Inference Pipeline
 from inference import InferencePipeline
-from llama_index.llms import OpenAI, ChatMessage, HuggingFaceLLM, MessageRole
-from llama_index.prompts import PromptTemplate, ChatPromptTemplate
+from llama_index.core.llms import ChatMessage, MessageRole
+from llama_index.llms.openai import OpenAI
+from llama_index.llms.huggingface import HuggingFaceLLM
+from llama_index.core.prompts import PromptTemplate, ChatPromptTemplate
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
@@ -28,8 +30,10 @@ if LLM == "gpt":
 elif LLM == "huggingface":
     llm = HuggingFaceLLM(model_name=HF_MODEL)
     set_global_tokenizer(AutoTokenizer.from_pretrained(HF_MODEL).encode)
-service_context = ServiceContext.from_defaults(llm=llm, embed_model=EMBED_MODEL)
-set_global_service_context(service_context)
+Settings.llm = llm
+Settings.embed_model = EMBED_MODEL
+#service_context = ServiceContext.from_defaults(llm=llm, embed_model=EMBED_MODEL)
+#set_global_service_context(service_context)
 
 ######### Feature Pipeline ###########
 ## 1. Load ##
