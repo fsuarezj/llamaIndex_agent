@@ -1,0 +1,27 @@
+Agents:
+    - 1. Parse existing form: doc, xlsForm, excel, pandas, etc.
+    - 2. Get information for the form
+    - 3. Create form:
+        - Ask about the delivery mechanism
+        - Household level or individual level
+        - Include basic information:
+            * Intro registration (what is the project about? NS? Managing expectations?)
+            * Consent
+            * All: firstName, lastName, gender (prefer not to say), birthdate or age, id and type of id?, village, region)
+            * HH: hhMembers dissaggregated
+            * Selection criteria
+            * Include Other and ask for more info
+            * All closed questions
+            * Include if there is any constraint
+        - Ask about KYC and if there is a unique identifier.
+        - Be sure if there is a unique identifier, otherwise create an id?
+    - 4. Create xlsForm:
+        - Meaningful variable names
+        - camelCase
+        - All required
+        - phoneNumbers are text
+        - Regex
+
+RouterQueryEngine:
+    - Get admin levels
+    - 

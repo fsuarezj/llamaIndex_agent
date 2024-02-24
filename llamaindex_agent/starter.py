@@ -25,7 +25,7 @@ logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 ######### INIT SYSTEM #########
 
 if LLM == "gpt":
-    llm = OpenAI(temperature=0.1, model=GPT_MODEL)
+    llm = OpenAI(temperature=0.1, model=GPT_MODEL, verbose=True)
     set_global_tokenizer(tiktoken.encoding_for_model(GPT_MODEL).encode)
 elif LLM == "huggingface":
     llm = HuggingFaceLLM(model_name=HF_MODEL)
