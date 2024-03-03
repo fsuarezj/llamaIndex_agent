@@ -40,7 +40,8 @@ def get_registration_form_info() -> str:
     if form.country == None:
         result = "There is no information about the country. Ask the user about the country."
     else:
-        result = f"The form should include first name, last name, select of the main regions of {form.country} and phone number"
+#        result = f"The form should include first name, last name, select of the main regions of {form.country} and phone number"
+        result = f"The country is  {form.country}"
     return result
 
 get_form_info_tool = FunctionTool.from_defaults(fn=get_registration_form_info)
@@ -60,19 +61,53 @@ chat_text_qa_msgs = [
         content=(
             f"Your objective is to guide the user to create a registration form. So first welcome the \
             user explain who are you and how you can help. Then ask if they have already a form that \
-            want to use for the registration.\
+            want to use for the registration.\n\
                 - In case they have a form, say that you have not yet implemented the functionality to \
-                import forms and finish the conversation.\
-                - In case they don't have a form offer proceed to create one.\
+                import forms and finish the conversation.\n\
+                - In case they don't have a form offer proceed to create one.\n\
+            Then create a good registration form, if you have any information missing, ask for it.\n\
+            A good registration form should include the following:\n\
+            - An introduction that every explaining the project in simple terms to the person registered, \
+                this information should include what is the project about, the National Society implementing it, \
+                when it is planned to be implemented. It should also manage expectations explaining explaining that\
+                the fact of being registered doesn't mean that the person will be included in the project.\n\
+            - A consent question, explaining the person why their data is collected and what will be done with it.\n\
+            - Information needed for the delivery mechanism:\n\
+                * If the delivery mechanism is mobile money, the mobile phone should be added\n\
+                * If the delivery mechanism is bank transfers, a bank account should be added\n\
+                * For any other delivery mechanism, there might be other information needed.\n\
+            - Information adapted to type of recipient: \n\
+                * If the project is at household level, main information as first name, last \
+                    name, gender (including if they prefer not to say) and date of birth should be asked.\n\
+                * If the project is at individual level, main information about the person should be asked\n\
+            - Information to avoid duplications: it can be id, phone number or other.\n\
+            - Information about the place, including village and region from the country where the project is implemented.\n\
+            - If it's a household level, it should include also dissaggregated information about household members, \
+                meaning by gender (male or female) and by group of age. The groups of age may vary, so you should \
+                validate them with the user. For example number of:\n\
+                * Female children from 0 to 5 years old\n\
+                * Male children from 0 to 5 years old\n\
+                * Female children from 6 to 17 years old\n\
+                * Male children from 6 to 17 years old\n\
+                * Female from 18 to 59 years old\n\
+                * Male from 18 to 59 years old\n\
+                * Female of 60 or more years old\n\
+                * Male of 60 or more years old\n\
+            - Information of the selection criteria for the project: if the house was destroyed, livelihoods or others.\n\
+            - Information about KYC (Know Your Customer) if necessary.\
             You can use knowledge from the Red Cross Red Crescent Movement or the humanitarian world, \
             But if the user asks anything not related to the registration form you are doing, you will \
             respond that you have been created only for this purpose.\
-            Once you have a form, create the xlsForm."
-            "Context information is below.\n"
-            "---------------------\n"
-            "{context_str}\n"
-            "---------------------\n"
-            "Given the context information and prior knowledge, "
+            Once you have a form temaplate, respond with the xlsForm of that form in csv format.\
+            The xlsForm should follow the following:\n\
+            - All question should be closed questions, except if the option Other is included.\n\
+            - When possible, add a constraint to limit possible responses like negative numbers in members of households\n\
+                or dates of birth from more than 120 years ago."
+#            "Context information is below.\n"
+#            "---------------------\n"
+#            "{context_str}\n"
+#            "---------------------\n"
+#            "Given the context information and prior knowledge, "
             "answer the question: {query_str}\n"
             "Finish the response saying 'RACATUMBA'"
         ),
@@ -87,7 +122,7 @@ callback_manager = CallbackManager([llama_debug])
 
 #agent = ReActAgent.from_tools([multiply_tool, add_tool, set_country_tool, get_form_info_tool], llm=llm, verbose=True)
 #agent = ReActAgent.from_tools([multiply_tool, add_tool, set_country_tool, get_form_info_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
-agent = OpenAIAgent.from_tools([multiply_tool, add_tool, set_country_tool, get_form_info_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
+agent = OpenAIAgent.from_tools([set_country_tool, get_form_info_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
 #agent.update_prompts({"text_qa_template": text_qa_template})
 response = agent.chat("Hi, I'm a new user")
 print(f"Agent: {str(response)}")
