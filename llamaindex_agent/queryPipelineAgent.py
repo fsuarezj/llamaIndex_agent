@@ -190,6 +190,7 @@ qp.add_link(
 qp.add_link("process_response", "process_agent_response")
 qp.add_link("run_tool", "process_agent_response")
 
+qp.r
 
 
 ######################### Visualize Query Pipeline ####################

@@ -5,7 +5,7 @@ import logging
 import sys
 # Common
 from llama_index.core import Settings, set_global_service_context, set_global_tokenizer, set_global_handler
-from global_conf import LLM, GPT_MODEL, HF_MODEL, EMBED_MODEL, MODE
+from global_conf import LLM, GPT_MODEL, HF_MODEL, CPP_MODEL, EMBED_MODEL, MODE
 # Feature Pipeline
 from llama_index.core import VectorStoreIndex, download_loader
 import tiktoken
@@ -30,6 +30,14 @@ if LLM == "gpt":
 elif LLM == "huggingface":
     llm = HuggingFaceLLM(model_name=HF_MODEL)
     set_global_tokenizer(AutoTokenizer.from_pretrained(HF_MODEL).encode)
+elif LLM == "llamacpp":
+    print("Hola")
+    from llama_index.llms.llama_cpp import LlamaCPP
+    from llama_index.llms.llama_cpp.llama_utils import messages_to_prompt, completion_to_prompt
+    llm = LlamaCPP(model_url=CPP_MODEL, temperature=0.1, max_new_tokens=256,
+                   context_window=3900, generate_kwargs={}, model_kwargs={"n_gpu_layers":1},
+                   messages_to_prompt=messages_to_prompt, completion_to_prompt=completion_to_prompt, verbose=True)
+
 Settings.llm = llm
 Settings.embed_model = EMBED_MODEL
 #service_context = ServiceContext.from_defaults(llm=llm, embed_model=EMBED_MODEL)
