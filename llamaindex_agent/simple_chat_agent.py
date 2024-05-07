@@ -6,6 +6,8 @@ from llama_index.core.tools import BaseTool, FunctionTool
 from llama_index.core import ChatPromptTemplate
 from llama_index.core.callbacks import CallbackManager, LlamaDebugHandler, CBEventType
 from global_conf import GPT_MODEL
+from io import StringIO
+import pandas as pd
 
 class FormInfo:
     def __init__(self):
@@ -59,6 +61,15 @@ def get_registration_form_info() -> str:
 
 get_form_info_tool = FunctionTool.from_defaults(fn=get_registration_form_info)
 
+def create_csv_file(csv: str) -> str:
+    """
+    Creates a csv file
+    """
+    df = pd.read_csv(StringIO(csv), sep=",")
+    df.to_excel("output/probando.xls")
+
+create_csv_file_tool = FunctionTool.from_defaults(fn=create_csv_file)
+
 # Text QA Prompt
 chat_text_qa_msgs = [
     ChatMessage(
@@ -72,9 +83,10 @@ chat_text_qa_msgs = [
             2. Ask if they have already a form that want to use for the registration.\n\
                 - In case they have a form, say that you have not yet implemented the functionality to \
                 import forms and finish the conversation.\n\
-                - In case they don't have a form offer proceed to create one.\
-            Then create a good registration form, if you have any information missing, ask for it.\
-            "
+                - In case they don't have a form, proceed to create one.\
+            If you have any information missing, ask for it.\
+            Once you have a form template, respond with the xlsForm of that form in csv format separated by commas and create\
+            a file with the csv."
         ),
     ),
     ChatMessage(
@@ -114,11 +126,12 @@ chat_text_qa_msgs = [
             You can use knowledge from the Red Cross Red Crescent Movement or the humanitarian world, \
             But if the user asks anything not related to the registration form you are doing, you will \
             respond that you have been created only for this purpose.\
-            Once you have a form temaplate, respond with the xlsForm of that form in csv format.\
             The xlsForm should follow the following:\n\
             - All question should be closed questions, except if the option Other is included.\n\
+            - All questions should be mandatory\
             - When possible, add a constraint to limit possible responses like negative numbers in members of households\n\
-                or dates of birth from more than 120 years ago."
+                or dates of birth from more than 120 years ago.\
+            - All variables should be in camelCase"
 #            "Context information is below.\n"
 #            "---------------------\n"
 #            "{context_str}\n"
@@ -138,7 +151,7 @@ callback_manager = CallbackManager([llama_debug])
 
 #agent = ReActAgent.from_tools([multiply_tool, add_tool, set_country_tool, get_form_info_tool], llm=llm, verbose=True)
 #agent = ReActAgent.from_tools([multiply_tool, add_tool, set_country_tool, get_form_info_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
-agent = OpenAIAgent.from_tools([set_country_tool, get_country_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
+agent = OpenAIAgent.from_tools([set_country_tool, get_country_tool, create_csv_file_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
 #agent.update_prompts({"text_qa_template": text_qa_template})
 response = agent.chat("Hi, I'm a new user")
 print(f"Agent: {str(response)}")
