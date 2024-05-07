@@ -33,6 +33,19 @@ def set_country(country_field) -> str:
 
 set_country_tool = FunctionTool.from_defaults(fn=set_country)
 
+def get_country() -> str:
+    """
+    Provides the country where the registration eorm
+    """
+    if form.country == None:
+        result = "There is no information about the country. Ask the user about the country."
+    else:
+#        result = f"The form should include first name, last name, select of the main regions of {form.country} and phone number"
+        result = f"The country is  {form.country}"
+    return result
+
+get_country_tool = FunctionTool.from_defaults(fn=get_country)
+
 def get_registration_form_info() -> str:
     """
     Provides the basic information to create a registration form
@@ -51,21 +64,23 @@ chat_text_qa_msgs = [
     ChatMessage(
         role=MessageRole.SYSTEM,
         content=(
-            "You are an expert system aimed to create registration forms for the 121 platform. \
+            f"You are an expert system aimed to create registration forms for the 121 platform. \
             The 121 platform is a system to manage cash projects developed by 510, the data and \
-            digital unit of Netherlands Red Cross."
+            digital unit of Netherlands Red Cross.\
+            Your objective is to guide the user to create a registration form. To do that, follow these steps:\
+            1. Welcome the user explain who are you and how you can help.\
+            2. Ask if they have already a form that want to use for the registration.\n\
+                - In case they have a form, say that you have not yet implemented the functionality to \
+                import forms and finish the conversation.\n\
+                - In case they don't have a form offer proceed to create one.\
+            Then create a good registration form, if you have any information missing, ask for it.\
+            "
         ),
     ),
     ChatMessage(
         role=MessageRole.USER,
         content=(
-            f"Your objective is to guide the user to create a registration form. So first welcome the \
-            user explain who are you and how you can help. Then ask if they have already a form that \
-            want to use for the registration.\n\
-                - In case they have a form, say that you have not yet implemented the functionality to \
-                import forms and finish the conversation.\n\
-                - In case they don't have a form offer proceed to create one.\n\
-            Then create a good registration form, if you have any information missing, ask for it.\n\
+            f"Then create a good registration form, if you have any information missing, ask for it.\n\
             A good registration form should include the following:\n\
             - An introduction that every explaining the project in simple terms to the person registered, \
                 this information should include what is the project about, the National Society implementing it, \
@@ -83,8 +98,8 @@ chat_text_qa_msgs = [
             - Information to avoid duplications: it can be id, phone number or other.\n\
             - Information about the place, including village and region from the country where the project is implemented.\n\
             - If it's a household level, it should include also dissaggregated information about household members, \
-                meaning by gender (male or female) and by group of age. The groups of age may vary, so you should \
-                validate them with the user. For example number of:\n\
+                meaning the number of members by gender (male or female) and by group of age. The groups of age may vary, so you should \
+                ask the user if the ranges are as follows:\n\
                 * Female children from 0 to 5 years old\n\
                 * Male children from 0 to 5 years old\n\
                 * Female children from 6 to 17 years old\n\
@@ -93,7 +108,8 @@ chat_text_qa_msgs = [
                 * Male from 18 to 59 years old\n\
                 * Female of 60 or more years old\n\
                 * Male of 60 or more years old\n\
-            - Information of the selection criteria for the project: if the house was destroyed, livelihoods or others.\n\
+            - Information of the selection criteria for the project: if the house was destroyed, livelihoods or others. If you don't\
+                have information about the selection criteria, ask for them to include clear questions about them.\n\
             - Information about KYC (Know Your Customer) if necessary.\
             You can use knowledge from the Red Cross Red Crescent Movement or the humanitarian world, \
             But if the user asks anything not related to the registration form you are doing, you will \
@@ -122,7 +138,7 @@ callback_manager = CallbackManager([llama_debug])
 
 #agent = ReActAgent.from_tools([multiply_tool, add_tool, set_country_tool, get_form_info_tool], llm=llm, verbose=True)
 #agent = ReActAgent.from_tools([multiply_tool, add_tool, set_country_tool, get_form_info_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
-agent = OpenAIAgent.from_tools([set_country_tool, get_form_info_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
+agent = OpenAIAgent.from_tools([set_country_tool, get_country_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
 #agent.update_prompts({"text_qa_template": text_qa_template})
 response = agent.chat("Hi, I'm a new user")
 print(f"Agent: {str(response)}")
@@ -151,3 +167,5 @@ for i in llm_pairs:
         if "response" in j.payload.keys():
             print("RESPONSE")
             print(j.payload["response"])
+
+print(form.country)

@@ -61,7 +61,6 @@ from llama_index.core.query_pipeline import InputComponent, Link
 from llama_index.core.llms import ChatMessage
 from llama_index.core.tools import BaseTool
 
-
 ## define prompt function
 def react_prompt_fn(
     task: Task, state: Dict[str, Any], input: str, tools: List[BaseTool]
@@ -74,18 +73,15 @@ def react_prompt_fn(
         current_reasoning=state["current_reasoning"],
     )
 
-
 react_prompt_component = AgentFnComponent(
     fn=react_prompt_fn, partial_dict={"tools": [sql_tool]}
 )
-
 
 ##################### Define Agent Output Parser + Tool Pipeline ###################
 from typing import Set, Optional
 from llama_index.core.agent.react.output_parser import ReActOutputParser
 from llama_index.core.llms import ChatResponse
 from llama_index.core.agent.types import Task
-
 
 def parse_react_output_fn(
     task: Task, state: Dict[str, Any], chat_response: ChatResponse
@@ -95,9 +91,7 @@ def parse_react_output_fn(
     reasoning_step = output_parser.parse(chat_response.message.content)
     return {"done": reasoning_step.is_done, "reasoning_step": reasoning_step}
 
-
 parse_react_output = AgentFnComponent(fn=parse_react_output_fn)
-
 
 def run_tool_fn(
     task: Task, state: Dict[str, Any], reasoning_step: ActionReasoningStep
@@ -116,9 +110,7 @@ def run_tool_fn(
 
     return {"response_str": observation_step.get_content(), "is_done": False}
 
-
 run_tool = AgentFnComponent(fn=run_tool_fn)
-
 
 def process_response_fn(
     task: Task, state: Dict[str, Any], response_step: ResponseReasoningStep
@@ -134,9 +126,7 @@ def process_response_fn(
 
     return {"response_str": response_str, "is_done": True}
 
-
 process_response = AgentFnComponent(fn=process_response_fn)
-
 
 def process_agent_response_fn(
     task: Task, state: Dict[str, Any], response_dict: dict
@@ -148,8 +138,6 @@ def process_agent_response_fn(
     )
 
 process_agent_response = AgentFnComponent(fn=process_agent_response_fn)
-
-
 
 ################### Stitch together Agent Query Pipeline ###################
 from llama_index.core.query_pipeline import QueryPipeline
@@ -190,12 +178,31 @@ qp.add_link(
 qp.add_link("process_response", "process_agent_response")
 qp.add_link("run_tool", "process_agent_response")
 
-qp.r
-
-
 ######################### Visualize Query Pipeline ####################
 from pyvis.network import Network
 
 net = Network(notebook=True, cdn_resources="in_line", directed=True)
 net.from_nx(qp.clean_dag)
-net.show("output/agent_dag.html")
+net.show_buttons()
+#net.show("output/agent_dag.html")
+html = net. generate_html()
+with open("output/agent_dag.html", mode='w', encoding='utf-8') as fp:
+    fp.write(html)
+
+########## Setup Agent Worker around Text-to-SQL Query Pipeline #############
+from llama_index.core.agent import QueryPipelineAgentWorker
+from llama_index.core.callbacks import CallbackManager
+
+agent_worker = QueryPipelineAgentWorker(qp)
+agent = agent_worker.as_agent(
+    callback_manager=CallbackManager([]), verbose=True
+)
+
+######################## Run the Agent ###############################
+# start task
+task = agent.create_task(
+    "What are some tracks from the artist AC/DC? Limit it to 3"
+)
+
+step_output = agent.run_step(task.task_id)
+step_output = agent.run_step(task.task_id)
