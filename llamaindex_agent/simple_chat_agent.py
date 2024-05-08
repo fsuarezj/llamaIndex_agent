@@ -6,6 +6,7 @@ from llama_index.core.tools import BaseTool, FunctionTool
 from llama_index.core import ChatPromptTemplate
 from llama_index.core.callbacks import CallbackManager, LlamaDebugHandler, CBEventType
 from global_conf import GPT_MODEL
+from utils import CaptureStderr
 from io import StringIO
 import pandas as pd
 
@@ -63,10 +64,15 @@ get_form_info_tool = FunctionTool.from_defaults(fn=get_registration_form_info)
 
 def create_csv_file(csv: str) -> str:
     """
-    Creates a csv file
+    Creates a csv file, gets only one argument with the csv content
     """
-    df = pd.read_csv(StringIO(csv), sep=",")
-    df.to_excel("output/probando.xls")
+    with CaptureStderr() as output:
+        df = pd.read_csv(StringIO(csv), sep=";")
+    print("HEYYYYY: ", output)
+    with CaptureStderr() as output:
+        df.to_excel("output/probando.xlsx")
+    print("HOLAAAAAA")
+    print(output)
 
 create_csv_file_tool = FunctionTool.from_defaults(fn=create_csv_file)
 
@@ -85,7 +91,7 @@ chat_text_qa_msgs = [
                 import forms and finish the conversation.\n\
                 - In case they don't have a form, proceed to create one.\
             If you have any information missing, ask for it.\
-            Once you have a form template, respond with the xlsForm of that form in csv format separated by commas and create\
+            Once you have a form template, respond with the xlsForm of that form in csv format separated by semicolons and create\
             a file with the csv."
         ),
     ),
