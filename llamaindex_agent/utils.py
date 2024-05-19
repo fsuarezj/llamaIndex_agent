@@ -14,7 +14,7 @@ class CaptureStdout(list):
 
 class CaptureStderr(list):
     def __enter__(self):
-        self._stderr = sys.st
+        self._stderr = sys.stderr
         sys.stderr = self._stringio = StringIO()
         return self
     

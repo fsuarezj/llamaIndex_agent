@@ -1,3 +1,7 @@
+Next tasks:
+    - Create logic with two agents: 3 and 4
+    - Divide agent 3 in several
+
 Agents:
     - 1. Parse existing form: doc, xlsForm, excel, pandas, etc.
     - 2. Get information for the form

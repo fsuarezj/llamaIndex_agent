@@ -70,54 +70,43 @@ def create_csv_file(csv: str) -> str:
         df = pd.read_csv(StringIO(csv), sep=";")
     print("HEYYYYY: ", output)
     with CaptureStderr() as output:
-        df.to_excel("output/probando.xlsx")
+        df.to_excel("output/probando.xlsx", index=False)
     print("HOLAAAAAA")
     print(output)
 
 create_csv_file_tool = FunctionTool.from_defaults(fn=create_csv_file)
 
 # Text QA Prompt
-chat_text_qa_msgs = [
-    ChatMessage(
-        role=MessageRole.SYSTEM,
-        content=(
-            f"You are an expert system aimed to create registration forms for the 121 platform. \
-            The 121 platform is a system to manage cash projects developed by 510, the data and \
-            digital unit of Netherlands Red Cross.\
-            Your objective is to guide the user to create a registration form. To do that, follow these steps:\
-            1. Welcome the user explain who are you and how you can help.\
-            2. Ask if they have already a form that want to use for the registration.\n\
-                - In case they have a form, say that you have not yet implemented the functionality to \
+
+init_prompt = f"Guide me to create a registration form for 121. To do that, follow these steps:\
+            1. Welcome me explain who are you and how you can help.\
+            2. Ask if I have already a form that want to use for the registration.\n\
+                - In case I have a form, say that you have not yet implemented the functionality to \
                 import forms and finish the conversation.\n\
-                - In case they don't have a form, proceed to create one.\
-            If you have any information missing, ask for it.\
-            Once you have a form template, respond with the xlsForm of that form in csv format separated by semicolons and create\
-            a file with the csv."
-        ),
-    ),
-    ChatMessage(
-        role=MessageRole.USER,
-        content=(
-            f"Then create a good registration form, if you have any information missing, ask for it.\n\
-            A good registration form should include the following:\n\
+                - In case I don't have a form, proceed to create one in xlsform.\
+            \
+            To create a form, consider all the following points that a good registration form should include.\
+            If you don't have any information, ask for it, don't make assumptions. Interact with me with\
+            simple questions one by one:\
             - An introduction that every explaining the project in simple terms to the person registered, \
-                this information should include what is the project about, the National Society implementing it, \
+                this information should include what is the project about, the National Society implementing it and \
                 when it is planned to be implemented. It should also manage expectations explaining explaining that\
                 the fact of being registered doesn't mean that the person will be included in the project.\n\
             - A consent question, explaining the person why their data is collected and what will be done with it.\n\
-            - Information needed for the delivery mechanism:\n\
+            - Questions about the information needed for the delivery mechanism:\n\
                 * If the delivery mechanism is mobile money, the mobile phone should be added\n\
                 * If the delivery mechanism is bank transfers, a bank account should be added\n\
-                * For any other delivery mechanism, there might be other information needed.\n\
-            - Information adapted to type of recipient: \n\
+                * For any other delivery mechanism, there may be other information needed and you should ask for it.\n\
+            - Questions the type of recipient, depending on if the recipients are households or individuals: \n\
                 * If the project is at household level, main information as first name, last \
-                    name, gender (including if they prefer not to say) and date of birth should be asked.\n\
-                * If the project is at individual level, main information about the person should be asked\n\
-            - Information to avoid duplications: it can be id, phone number or other.\n\
-            - Information about the place, including village and region from the country where the project is implemented.\n\
-            - If it's a household level, it should include also dissaggregated information about household members, \
-                meaning the number of members by gender (male or female) and by group of age. The groups of age may vary, so you should \
-                ask the user if the ranges are as follows:\n\
+                    name, gender (including if they prefer not to say) and date of birth of the head of household should be asked.\n\
+                * If the project is at individual level, same main information about the person should be asked.\n\
+            - Questions to avoid duplications: it can be id, phone number or other.\n\
+            - Questions about the place, including village and region from the country where the project is implemented.\n\
+            - If it's a project at household level, it should include also dissaggregated information about household members, \
+                meaning the total number of members by gender (male or female) and group of age. The groups of age may vary, so you should \
+                ask the user if the ranges are as follows. If any change, you have to be sure that all ages are included in one\
+                and only one range:\n\
                 * Female children from 0 to 5 years old\n\
                 * Male children from 0 to 5 years old\n\
                 * Female children from 6 to 17 years old\n\
@@ -126,24 +115,37 @@ chat_text_qa_msgs = [
                 * Male from 18 to 59 years old\n\
                 * Female of 60 or more years old\n\
                 * Male of 60 or more years old\n\
-            - Information of the selection criteria for the project: if the house was destroyed, livelihoods or others. If you don't\
+            - Questions about the selection criteria for the project: if the house was destroyed, livelihoods or others. If you don't\
                 have information about the selection criteria, ask for them to include clear questions about them.\n\
-            - Information about KYC (Know Your Customer) if necessary.\
+            - If necessary by the delivery mechanism, questions for KYC (Know Your Customer). It can be an ID, phone number or other"
+
+chat_text_qa_msgs = [
+    ChatMessage(
+        role=MessageRole.SYSTEM,
+        content=(
+            f"You are an expert system aimed to create registration forms for the 121 platform. \
+            The 121 platform is a system to manage cash projects developed by 510, the data and \
+            digital unit of Netherlands Red Cross.\
             You can use knowledge from the Red Cross Red Crescent Movement or the humanitarian world, \
             But if the user asks anything not related to the registration form you are doing, you will \
             respond that you have been created only for this purpose.\
+            If necessary, ask more questions to get more information about the form\
+            \
+            Once you have a form template, respond with the xlsForm of that form in csv format separated by semicolons and create\
+            a file with the csv of the survey.\n\
             The xlsForm should follow the following:\n\
-            - All question should be closed questions, except if the option Other is included.\n\
-            - All questions should be mandatory\
+            - All question should be closed questions, except if the option Other is included, in that case it should add a conditional\
+                questions with a text to specify Other.\n\
+            - All questions should be mandatory, so if it's not relevant it should be hidden with conditional logic.\n\
             - When possible, add a constraint to limit possible responses like negative numbers in members of households\n\
-                or dates of birth from more than 120 years ago.\
-            - All variables should be in camelCase"
-#            "Context information is below.\n"
-#            "---------------------\n"
-#            "{context_str}\n"
-#            "---------------------\n"
-#            "Given the context information and prior knowledge, "
-            "answer the question: {query_str}\n"
+                or dates of birth from more than 120 years ago.\n\
+            - All variables should be in camelCase."
+        ),
+    ),
+    ChatMessage(
+        role=MessageRole.USER,
+        content=(
+            "{query_str}\n"
             "Finish the response saying 'RACATUMBA'"
         ),
     ),
@@ -159,7 +161,7 @@ callback_manager = CallbackManager([llama_debug])
 #agent = ReActAgent.from_tools([multiply_tool, add_tool, set_country_tool, get_form_info_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
 agent = OpenAIAgent.from_tools([set_country_tool, get_country_tool, create_csv_file_tool], llm=llm, verbose=True, prefix_messages=chat_text_qa_msgs,callback_manager=callback_manager)
 #agent.update_prompts({"text_qa_template": text_qa_template})
-response = agent.chat("Hi, I'm a new user")
+response = agent.chat(init_prompt)
 print(f"Agent: {str(response)}")
 
 while True:
